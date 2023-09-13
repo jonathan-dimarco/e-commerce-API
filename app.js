@@ -3,6 +3,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import { sequelize } from "./database/database.js";
 import "./models/items.js"
+import "./models/users.js"
 //Inicio una nueva instancia del framework Express para utilizar con la const "app"
 const app = express();
 
