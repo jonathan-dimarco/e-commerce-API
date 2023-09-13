@@ -1,8 +1,8 @@
-//Requiero los paquetes, dependencias y middleware que voy a utilizar
-const express = require("express");
-const bodyParser = require("body-parser");
-const sequelize = require("./database/database.js");
-
+//Requiero los paquetes, dependencias, middleware y modelos que voy a utilizar
+import express from "express";
+import bodyParser from "body-parser";
+import { sequelize } from "./database/database.js";
+import "./models/items.js"
 //Inicio una nueva instancia del framework Express para utilizar con la const "app"
 const app = express();
 
@@ -16,12 +16,13 @@ app.use(
 app.use(bodyParser.json());
 
 /*Seteo el puerto y la respuesta al iniciarlo, incluyo un metodo del ORM SEQUELIZE para
-testear que la conexión a la base de datos es correcta*/
+testear que la conexión a la base de datos es correcta y el metodo "sync" para sincronizarla*/
 const PORT = process.env.PORT || 5000;
 
 async function main() {try {
   await sequelize.authenticate();
   console.log('Connection has been established successfully.');
+  await sequelize.sync();
   app.listen(PORT, () => {
     console.log(`App running on port ${PORT}`);
 });
@@ -39,4 +40,4 @@ app.get('/', (req, res) =>
   }
   )
 
-module.exports = app;
+export default app;
