@@ -19,6 +19,7 @@ subtotal: {
     type: DataTypes.INTEGER
 }
 })
+Carrito.removeAttribute("id");
 
 //Defino las relaciones entre tablas utilizando los metodos que me provee el ORM
 
