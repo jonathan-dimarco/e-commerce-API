@@ -11,10 +11,12 @@ id: {
 },
 email: {
     type: DataTypes.STRING,
-    unique: true
+    unique: true,
+    allowNull: false
 },
 password: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    allowNull: false
 },
 first_name: {
     type: DataTypes.STRING

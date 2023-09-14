@@ -7,17 +7,16 @@ import { User } from './users.js';
 para luego implementarlos en la BB.DD*/
 export const Carrito = sequelize.define('carritos', {
 user_id: {
-    type: DataTypes.INTEGER
+    type: DataTypes.INTEGER,
+    allowNull: false
 },
 item_id: {
-    type: DataTypes.INTEGER
+    type: DataTypes.INTEGER,
+    allowNull: false
 },
 quantity: {
     type: DataTypes.INTEGER
 },
-subtotal: {
-    type: DataTypes.INTEGER
-}
 })
 Carrito.removeAttribute("id");
 
