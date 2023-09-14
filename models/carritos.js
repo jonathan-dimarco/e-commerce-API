@@ -32,14 +32,4 @@ User.hasMany(Carrito, {
     targetId:"id"
 })
 
-// Carrito.belongsTo(Item, {
-//     foreignKey: "item_id",
-//     sourceKey:"id"
-// })
-
-// Item.hasMany(Carrito, {
-//     foreignKey: "item_id",
-//     targetId:"id"
-// })
-
 Carrito.belongsTo(Item, { foreignKey: 'item_id', as: 'item' });

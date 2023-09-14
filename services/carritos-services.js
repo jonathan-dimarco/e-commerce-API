@@ -51,6 +51,64 @@ export const emptyCarrito = async (req, res) => {
     }
 }
 
+//agregar un item al carrito
+export const addItemToCarrito = async (req, res) => {
+    const { user_id } = req.params;
+    const {item_id, quantity} = req.body;
+
+      // Inicia una transacción de Sequelize
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Verificar si el ítem existe y tiene suficiente stock en la tabla "items"
+    const item = await Item.findByPk(item_id, { transaction });
+
+    if (item && item.stock >= quantity) {
+      // Verificar si el ítem ya existe en la tabla "carritos" para el usuario
+      let itemEnCarrito = await Carrito.findOne({
+        where: {
+          user_id: user_id,
+          item_id: item_id
+        },
+        transaction
+      });
+
+      if (itemEnCarrito) {
+        // Si el ítem ya existe en el carrito, suma la cantidad pasada en el cuerpo de la solicitud
+        itemEnCarrito.quantity += quantity;
+        await itemEnCarrito.save({ transaction });
+      } else {
+        // Si el ítem no existe en el carrito, crea un nuevo registro en la tabla "carritos"
+        itemEnCarrito = await Carrito.create(
+          {
+            user_id: user_id,
+            item_id: item_id,
+            quantity: quantity
+          },
+          { transaction }
+        );
+      }
+
+      // Resta la cantidad del stock en la tabla de "items"
+      item.stock -= quantity;
+      await item.save({ transaction });
+
+      // Confirma la transacción
+      await transaction.commit();
+      res.status(201).json({ message: 'El Item se ha agregado al carrito exitosamente' });
+    } else {
+      // Si el ítem no existe o no hay suficiente stock, revierte la transacción
+      await transaction.rollback();
+      res.status(400).json({ message: 'El ítem no está disponible o no hay suficiente stock' });
+    }
+  } catch (error) {
+    // En caso de error en la consulta o validaciones se revierte la transacción
+    await transaction.rollback();
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 //obtener un item especifico del carrito si existe en el mismo
 export const getItemFromCarrito = async (req, res) => {
     const { user_id, item_id } = req.params;
@@ -88,9 +146,6 @@ export const getItemFromCarrito = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-//agregar un item al carrito
-
 
 //quitar una cantidad especifica de elementos en el carrito
 export const substractQuantity = async (req, res) => {
