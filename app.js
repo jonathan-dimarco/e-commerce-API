@@ -5,6 +5,7 @@ import { sequelize } from "./database/database.js";
 import "./models/items.js"
 import "./models/users.js"
 import "./models/carritos.js"
+import carritosRoutes from "./routes/carritos-routes.js"
 //Inicio una nueva instancia del framework Express para utilizar con la const "app"
 const app = express();
 
@@ -14,8 +15,11 @@ app.use(
       extended: true,
     })
   );
-
 app.use(bodyParser.json());
+
+//Indico a la app que utilice los routers
+
+app.use(carritosRoutes);
 
 /*Seteo el puerto y la respuesta al iniciarlo, incluyo un metodo del ORM SEQUELIZE para
 testear que la conexión a la base de datos es correcta y el metodo "sync" para sincronizarla*/
@@ -24,7 +28,7 @@ const PORT = process.env.PORT || 5000;
 async function main() {try {
   await sequelize.authenticate();
   console.log('Connection has been established successfully.');
-  await sequelize.sync({force: true});
+  await sequelize.sync({force: false});
   app.listen(PORT, () => {
     console.log(`App running on port ${PORT}`);
 });
