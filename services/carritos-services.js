@@ -1,19 +1,28 @@
-//importo el modelo para realizar consultas
-import { Carrito } from "../models/carritos.js"
+//importo los modelos para realizar consultas a la BBDD
+import { sequelize } from "../database/database.js";
+import { Carrito } from "../models/carritos.js";
+import { Item } from "../models/items.js";
+
 
 //funciones para interactuar con la base de datos
 
 //obtener el carrito completo
 export const getCarrito = async (req, res) => {
     try {
-        const { user_id } = req.params;
-        const carrito = await Carrito.findAll({
+        const { user_id } = req.params; //Deconstruyo los parametros para obtenerel id del usuario
+        const carrito = await Carrito.findAll({ //metodo del ORM para realizar la query SELECT from carritos
+            attributes: ["item_id", "quantity"],
             where: {
                 user_id
             }
         });
-        res.status(200).json(carrito);
+        if (carrito.length - 1) { //respuesta si el carrito esta vacio
+            res.status(404).json("El carrito está vacio")
+        } else {
+            res.status(200).json(carrito);
+        }
     } catch (error) {
+        // En caso de error en la consulta, maneja el error apropiadamente
         res.status(500).json({ message: error.message })
     }
 }
@@ -43,3 +52,107 @@ export const emptyCarrito = async (req, res) => {
 }
 
 //obtener un item especifico del carrito si existe en el mismo
+export const getItemFromCarrito = async (req, res) => {
+    const { user_id, item_id } = req.params;
+
+    try {
+        // Utilizo el método findOne del ORM para buscar una fila en la tabla "carritos"
+        const itemFromCarrito = await Carrito.findOne({
+            where: {
+                user_id: user_id,
+                item_id: item_id
+            },
+            attributes: ["quantity"], // Campos del carrito que deseo incluir
+            include: [
+                {
+                    model: Item, // Modelo que deseo incluir ( tabla items)
+                    as: "item", // nombre de la relación correcto
+                    attributes: ["name", "price"] // Campos a incluir en la query
+                }
+            ]
+        });
+
+        if (itemFromCarrito) {
+            // Si se encuentra el item, construye la respuesta JSON incluyendo tambien su nombre, precio y subtotal.
+            res.json({
+                item_id: Number(item_id),
+                name: itemFromCarrito.item.name, // Accedo a las propiedaddes del item a través de la relación
+                quantity: itemFromCarrito.quantity,
+                price: itemFromCarrito.item.price,
+                subtotal: (itemFromCarrito.quantity * itemFromCarrito.item.price)
+            });
+        } else {
+            res.status(404).json({ message: "El item no se encuentra en el Carrito" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+//agregar un item al carrito
+
+
+//quitar una cantidad especifica de elementos en el carrito
+export const substractQuantity = async (req, res) => {
+    const { user_id, item_id } = req.params;
+    const { cantidadARestar } = req.body; // Recupero la cantidad a restar desde el cuerpo de la solicitud
+
+    // Inicio una transacción mediante el ORM a fin de mantener una persistencia de datos en la BBDD
+    const transaction = await sequelize.transaction();
+
+    try {
+        const itemToSubstract = await Carrito.findOne({
+            where: {
+                user_id: user_id,
+                item_id: item_id
+            },
+            transaction
+        });
+
+        if (itemToSubstract) {
+            // Verifico si hay suficiente cantidad en el carrito antes de restar
+            if (itemToSubstract.quantity >= cantidadARestar) {
+                itemToSubstract.quantity -= cantidadARestar;
+
+                // Si la cantidad después de la resta es 0, se elimina el ítem del carrito
+                if (itemToSubstract.quantity === 0) {
+                    await itemToSubstract.destroy({ transaction });
+                } else {
+                    await itemToSubstract.save({ transaction });
+                }
+
+                // Resto la cantidad del stock en la tabla de ítems
+                const item = await Item.findByPk(item_id, { transaction });
+
+                if (item) {
+                    item.stock += cantidadARestar;
+                    await item.save({ transaction });
+
+                    // Confirmo la transacción
+                    await transaction.commit();
+                    res.status(200).json({ message: "La cantidad se ha actualizado exitosamente" });
+                }
+                else {
+                    // Si no se encuentra el ítem, se revierte la transacción
+                    await transaction.rollback();
+                    res.status(404).json({ message: "El item no se encuentra en la base de datos" });
+                }
+            } else {
+                // Si no hay suficiente cantidad en el carrito, se revierte la transacción
+                await transaction.rollback();
+                res.status(400).json({ message: "No hay suficiente cantidad en el carrito" });
+            }
+        } else {
+            // Si no se encuentra el item en el carrito, devuelvo un mensaje comunicando al cliente
+            res.status(404).json({ message: "El item no se encuentra en la base de datos" });
+        }
+    } catch (error) {
+        // Revierto la transacción en caso de error
+        await transaction.rollback();
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
