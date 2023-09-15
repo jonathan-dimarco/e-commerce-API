@@ -21,7 +21,7 @@ description: {
     type: DataTypes.STRING
 },
 price: {
-    type: DataTypes.INTEGER
+    type: DataTypes.DECIMAL
 },
 stock: {
     type: DataTypes.INTEGER
