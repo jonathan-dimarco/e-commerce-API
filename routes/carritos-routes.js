@@ -23,7 +23,7 @@ router.put("/api/carrito/:user_id/items/:item_id", substractQuantity)
 router.delete("/api/carrito/:user_id/items/:item_id", deleteItem)
 
 //obtener factura del carrito con todos los datos requeridos
-router.get("api/carrito/:user_id/invoice", getInvoice)
+router.get("/api/carrito/:user_id/invoice", getInvoice)
 
 
 
