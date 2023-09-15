@@ -272,6 +272,11 @@ export const getInvoice = async (req, res) => {
           ],
           attributes: ["quantity"]
         });
+
+        if (!carritoItems.length) {
+        //Si el carrito está vacío, devolvemos el error correspondiente
+            return res.status(400).json({ message: "El carrito está vacío" });
+          }
     
         /*Calculo la factura total sumando los subtotales de los ítems y creo una lista de los items
         junto a sus caracteristicas relevantes para el cliente (nombre, tipo, cantidad, precio, etc)*/
