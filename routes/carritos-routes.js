@@ -2,7 +2,7 @@
 import { Router } from "express";
 const router = Router();
 //importo los servicios para realizar las funciones requeridas en cada ruta
-import { addItemToCarrito, emptyCarrito, getCarrito, getItemFromCarrito, substractQuantity } from "../services/carritos-services.js"
+import { addItem, deleteItem, emptyCarrito, getCarrito, getInvoice, getItem, substractQuantity } from "../services/carritos-services.js"
 
 //obtener el carrito completo de un usuario
 router.get("/api/carrito/:user_id", getCarrito);
@@ -11,20 +11,19 @@ router.get("/api/carrito/:user_id", getCarrito);
 router.delete("/api/carrito/:user_id", emptyCarrito);
 
 //añadir un item al carrito
-router.post("/api/carrito/:user_id/items", addItemToCarrito);
+router.post("/api/carrito/:user_id/items", addItem);
 
 // obtener un item especifico del carrito (si existe en el mismo) de un usuario especifico 
-router.get("/api/carrito/:user_id/items/:item_id", getItemFromCarrito);
-
-
+router.get("/api/carrito/:user_id/items/:item_id", getItem);
 
 //restar items del carrito
 router.put("/api/carrito/:user_id/items/:item_id", substractQuantity)
 
-// router.delete()
+//eliminar item del carrito
+router.delete("/api/carrito/:user_id/items/:item_id", deleteItem)
 
-// //api/carrito/:user_id/invoice
-// router.get()
+//obtener factura del carrito con todos los datos requeridos
+router.get("api/carrito/:user_id/invoice", getInvoice)
 
 
 

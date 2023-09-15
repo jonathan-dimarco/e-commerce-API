@@ -52,65 +52,65 @@ export const emptyCarrito = async (req, res) => {
 }
 
 //agregar un item al carrito
-export const addItemToCarrito = async (req, res) => {
+export const addItem = async (req, res) => {
     const { user_id } = req.params;
-    const {item_id, quantity} = req.body;
+    const { item_id, quantity } = req.body;
 
-      // Inicia una transacción de Sequelize
-  const transaction = await sequelize.transaction();
+    // Inicio una transacción mediante el ORM a fin de mantener una persistencia de datos en la BBDD
+    const transaction = await sequelize.transaction();
 
-  try {
-    // Verificar si el ítem existe y tiene suficiente stock en la tabla "items"
-    const item = await Item.findByPk(item_id, { transaction });
+    try {
+        // Verifico si el ítem existe y tiene suficiente stock en la tabla "items"
+        const item = await Item.findByPk(item_id, { transaction });
 
-    if (item && item.stock >= quantity) {
-      // Verificar si el ítem ya existe en la tabla "carritos" para el usuario
-      let itemEnCarrito = await Carrito.findOne({
-        where: {
-          user_id: user_id,
-          item_id: item_id
-        },
-        transaction
-      });
+        if (item && item.stock >= quantity) {
+            // Verifico si el ítem ya existe en la tabla "carritos" para el usuario
+            let itemEnCarrito = await Carrito.findOne({
+                where: {
+                    user_id: user_id,
+                    item_id: item_id
+                },
+                transaction
+            });
 
-      if (itemEnCarrito) {
-        // Si el ítem ya existe en el carrito, suma la cantidad pasada en el cuerpo de la solicitud
-        itemEnCarrito.quantity += quantity;
-        await itemEnCarrito.save({ transaction });
-      } else {
-        // Si el ítem no existe en el carrito, crea un nuevo registro en la tabla "carritos"
-        itemEnCarrito = await Carrito.create(
-          {
-            user_id: user_id,
-            item_id: item_id,
-            quantity: quantity
-          },
-          { transaction }
-        );
-      }
+            if (itemEnCarrito) {
+                // Si el ítem ya existe en el carrito, se le suma la cantidad pasada en el cuerpo de la solicitud
+                itemEnCarrito.quantity += quantity;
+                await itemEnCarrito.save({ transaction });
+            } else {
+                // Si el ítem no existe en el carrito, se crea un nuevo registro en la tabla con esa cantidad
+                itemEnCarrito = await Carrito.create(
+                    {
+                        user_id: user_id,
+                        item_id: item_id,
+                        quantity: quantity
+                    },
+                    { transaction }
+                );
+            }
 
-      // Resta la cantidad del stock en la tabla de "items"
-      item.stock -= quantity;
-      await item.save({ transaction });
+            // se resta la cantidad del stock en la tabla de "items"
+            item.stock -= quantity;
+            await item.save({ transaction });
 
-      // Confirma la transacción
-      await transaction.commit();
-      res.status(201).json({ message: 'El Item se ha agregado al carrito exitosamente' });
-    } else {
-      // Si el ítem no existe o no hay suficiente stock, revierte la transacción
-      await transaction.rollback();
-      res.status(400).json({ message: 'El ítem no está disponible o no hay suficiente stock' });
+            // Confirmo la transacción
+            await transaction.commit();
+            res.status(201).json({ message: 'El Item se ha agregado al carrito exitosamente' });
+        } else {
+            // Si el ítem no existe o no hay suficiente stock, revierto la transacción
+            await transaction.rollback();
+            res.status(400).json({ message: 'El ítem no está disponible o no hay suficiente stock' });
+        }
+    } catch (error) {
+        // En caso de error en la consulta o validaciones se revierte la transacción
+        await transaction.rollback();
+        res.status(500).json({ message: error.message });
     }
-  } catch (error) {
-    // En caso de error en la consulta o validaciones se revierte la transacción
-    await transaction.rollback();
-    res.status(500).json({ message: error.message });
-  }
 };
 
 
 //obtener un item especifico del carrito si existe en el mismo
-export const getItemFromCarrito = async (req, res) => {
+export const getItem = async (req, res) => {
     const { user_id, item_id } = req.params;
 
     try {
@@ -131,7 +131,7 @@ export const getItemFromCarrito = async (req, res) => {
         });
 
         if (itemFromCarrito) {
-            // Si se encuentra el item, construye la respuesta JSON incluyendo tambien su nombre, precio y subtotal.
+            // Si se encuentra el item, envio una respuesta JSON incluyendo tambien su nombre, precio y subtotal.
             res.json({
                 item_id: Number(item_id),
                 name: itemFromCarrito.item.name, // Accedo a las propiedaddes del item a través de la relación
@@ -151,8 +151,7 @@ export const getItemFromCarrito = async (req, res) => {
 export const substractQuantity = async (req, res) => {
     const { user_id, item_id } = req.params;
     const { cantidadARestar } = req.body; // Recupero la cantidad a restar desde el cuerpo de la solicitud
-
-    // Inicio una transacción mediante el ORM a fin de mantener una persistencia de datos en la BBDD
+    // Inicio la transaccion
     const transaction = await sequelize.transaction();
 
     try {
@@ -207,6 +206,59 @@ export const substractQuantity = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+//quitar un item por completo del carrito
+export const deleteItem = async (req, res) => {
+    const { user_id, item_id } = req.params;
+    //inicio de la transaccion
+    const transaction = await sequelize.transaction();
+
+    try {
+        const itemToDelete = await Carrito.findOne({ //busco el item en el carrito
+            where: {
+                user_id: user_id,
+                item_id: item_id
+            },
+            transaction
+        });
+        //si el item existe...
+        if (itemToDelete) {
+
+            //...lo busco en la tabla items para actualizar su stock
+            const item = await Item.findByPk(item_id, { transaction });
+            if (item) {
+                item.stock += itemToDelete.quantity; //actualizo su cantidad
+                await item.save({ transaction }); //confirmo el cambio en la bb.dd
+
+
+                await itemToDelete.destroy({ transaction }); //elimino el item del carrito
+                await transaction.commit(); //confirmo la transaccion
+
+                res.status(204).json({ message: "El item fue removido del carrito exitosamente" });
+            }
+            else {
+                // Si no se encuentra el ítem, se revierte la transacción
+                await transaction.rollback();
+                res.status(404).json({ message: "El item no se encuentra en la base de datos" });
+            }
+
+        } else {
+            await transaction.rollback();
+            res.status(404).json("El item no se encuentra en el carrito")
+        }
+
+    } catch (error) {
+        await transaction.rollback();
+        res.status(500).json({ message: error.message });
+    }
+
+}
+
+//obtener la factura
+export const getInvoice = async (req, res) => {
+
+}
+
 
 
 
