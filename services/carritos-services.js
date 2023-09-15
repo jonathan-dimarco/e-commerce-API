@@ -16,8 +16,8 @@ export const getCarrito = async (req, res) => {
                 user_id
             }
         });
-        if (carrito.length - 1) { //respuesta si el carrito esta vacio
-            res.status(404).json("El carrito está vacio")
+        if (carrito.length === 0) { //respuesta si el carrito esta vacio
+             res.status(404).json("El carrito está vacio")
         } else {
             res.status(200).json(carrito);
         }
@@ -256,6 +256,24 @@ export const deleteItem = async (req, res) => {
 
 //obtener la factura
 export const getInvoice = async (req, res) => {
+    const { user_id } = req.params;
+    
+    try {
+        const carrito = await Carrito.findAll({ //busco todos los items del carrito que posee el usuario 
+            attributes: ["item_id", "quantity"],
+            where: {
+                user_id
+            }
+        });
+        if (carrito.length - 1) { //respuesta si el carrito esta vacio
+            res.status(404).json("El carrito está vacio")
+        } else {
+            res.status(200).json(carrito);
+        }
+        
+    } catch (error) {
+      res.status(500).json({message: error.message});  
+    }
 
 }
 
