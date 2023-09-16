@@ -5,18 +5,24 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "dev": "nodemon /app.js"
   },
   "author": "Lucas Di Marco",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.2",
+    "chai": "^4.3.8",
+    "chai-http": "^4.4.0",
+    "esm": "^3.2.25",
     "express": "^4.18.2",
     "express-sessions": "^1.0.1",
+    "mocha": "^10.2.0",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.33.0"
+    "sequelize": "^6.33.0",
+    "sequelize-mock": "^0.10.2",
+    "supertest": "^6.3.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

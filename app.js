@@ -8,7 +8,7 @@ import { Carrito } from "./models/carritos.js"
 import { usuarios, items, carritos } from "./database/data.js";
 import carritosRoutes from "./routes/carritos-routes.js"
 //Inicio una nueva instancia del framework Express para utilizar con la const "app"
-const app = express();
+export const app = express();
 
 //Seteo el middleware  para manejar las req y res en formato Json
 app.use(
@@ -29,9 +29,9 @@ const PORT = process.env.PORT || 5000;
 async function main() {
   try {
     await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
+    console.log('Conexión establecida exitosamente');
     //codigo para sincronizar, crear tablas y poblar datos en la base de datos
-    await sequelize.sync({ force: true }).then(async () => {
+    await sequelize.sync().then(async () => {
       for (const usuario of usuarios) {
         await User.create(usuario);
       }
@@ -48,10 +48,10 @@ async function main() {
         console.error('Error al poblar la base de datos:', error);
       });
     app.listen(PORT, () => {
-      console.log(`App running on port ${PORT}`);
+      console.log(`App disponible en el puerto: ${PORT}`);
     });
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.log('No se pudo conectar a la base de datos', error);
   }
 }
 

@@ -17,37 +17,14 @@ export const getCarrito = async (req, res) => {
             }
         });
         if (carrito.length === 0) { //respuesta si el carrito esta vacio
-            res.status(404).json("El carrito está vacio")
+            res.status(404);
+            res.json("El carrito está vacio");
         } else {
             res.status(200).json(carrito);
         }
     } catch (error) {
         // En caso de error en la consulta, maneja el error apropiadamente
         res.status(500).json({ message: error.message })
-    }
-}
-
-//vaciar el carrito completamente
-export const emptyCarrito = async (req, res) => {
-    try {
-        const { user_id } = req.params;
-        const carritoActual = await Carrito.findAll({
-            where: {
-                user_id
-            }
-        });
-        if (carritoActual.length - 1) {
-            res.status(404).json("El carrito ya se encontraba vacio, no hay items para eliminar")
-        } else {
-            await Carrito.destroy({
-                where: {
-                    user_id
-                }
-            })
-            res.status(204).json("El carrito fue vaciado con exito")
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
     }
 }
 
@@ -260,46 +237,46 @@ export const getInvoice = async (req, res) => {
     try {
         // obtengo todos los ítems en el carrito del usuario
         const carritoItems = await Carrito.findAll({
-          where: {
-            user_id: user_id
-          },
-          include: [
-            {
-              model: Item,
-              as: "item",
-              attributes: ["name", "product_type", "price"]
-            }
-          ],
-          attributes: ["quantity"]
+            where: {
+                user_id: user_id
+            },
+            include: [
+                {
+                    model: Item,
+                    as: "item",
+                    attributes: ["name", "product_type", "price"]
+                }
+            ],
+            attributes: ["quantity"]
         });
 
         if (!carritoItems.length) {
-        //Si el carrito está vacío, devolvemos el error correspondiente
+            //Si el carrito está vacío, devolvemos el error correspondiente
             return res.status(400).json({ message: "El carrito está vacío" });
-          }
-    
+        }
+
         /*Calculo la factura total sumando los subtotales de los ítems y creo una lista de los items
         junto a sus caracteristicas relevantes para el cliente (nombre, tipo, cantidad, precio, etc)*/
         let total = 0;
         const facturaItems = carritoItems.map((carritoItem) => {
-          const subtotal = carritoItem.quantity * carritoItem.item.price;
-          total += subtotal;
-    
-          return {
-            Nombre: carritoItem.item.name,
-            "Tipo de item": carritoItem.item.product_type,
-            Unidades: carritoItem.quantity,
-            "Precio unitario": carritoItem.item.price,
-            Subtotal: subtotal
-          };
+            const subtotal = carritoItem.quantity * carritoItem.item.price;
+            total += subtotal;
+
+            return {
+                Nombre: carritoItem.item.name,
+                "Tipo de item": carritoItem.item.product_type,
+                Unidades: carritoItem.quantity,
+                "Precio unitario": carritoItem.item.price,
+                Subtotal: subtotal
+            };
         });
         //factura total y la lista de ítems como respuesta en formato JSON
         res.status(200).json({ items: facturaItems, total: total });
-      } catch (error) {
+    } catch (error) {
         res.status(500).json({ message: error.message });
-      }
-    };
-    
+    }
+};
+
 
 
 
