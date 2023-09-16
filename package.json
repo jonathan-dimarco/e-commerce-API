@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "mocha",
-    "dev": "nodemon /app.js"
+    "dev": "nodemon /app.js",
+    "seed": "node database/seed.js"
   },
   "author": "Lucas Di Marco",
   "license": "ISC",

@@ -31,22 +31,7 @@ async function main() {
     await sequelize.authenticate();
     console.log('Conexión establecida exitosamente');
     //codigo para sincronizar, crear tablas y poblar datos en la base de datos
-    await sequelize.sync().then(async () => {
-      for (const usuario of usuarios) {
-        await User.create(usuario);
-      }
-
-      for (const item of items) {
-        await Item.create(item);
-      }
-      for (const carrito of carritos) {
-        await Carrito.create(carrito);
-      }
-      console.log('Base de datos poblada con éxito');
-    })
-      .catch((error) => {
-        console.error('Error al poblar la base de datos:', error);
-      });
+    await sequelize.sync();
     app.listen(PORT, () => {
       console.log(`App disponible en el puerto: ${PORT}`);
     });
