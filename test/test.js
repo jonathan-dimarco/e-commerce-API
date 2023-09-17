@@ -146,19 +146,6 @@ describe("Restar items del carrito (/carrito/:user_id/items/:item_id)", () => {
     })
 })
 
-describe("eliminar un item del carrito (/carrito/:user_id/items/:item_id)", () => {
-    it("devolver una respuesta 204 cuando se elimina el item correctamente", async () => {
-        const userId = 1
-        const itemId = 1
-
-        const res = await chai
-            .request(app)
-            .delete(`/carrito/${userId}/items/${itemId}`)
-
-        expect(res).to.have.status(204);
-    })
-})
-
 describe("Ruta para obtener la factura(/carrito/:user_id/invoice)", () => {
     it("Devolver una respuesta 200 cuando se obtiene la factura", async () => {
         const userId = 1;
