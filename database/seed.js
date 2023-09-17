@@ -24,7 +24,10 @@ await sequelize.sync({force: true}).then(async () => {
   })
     .catch((error) => {
       console.error('Error al poblar la base de datos:', error);
-    });
+    
+    
+  });
+  await sequelize.close()
 }
 
 seed()
